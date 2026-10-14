@@ -61,7 +61,11 @@ if ($SkipSelftest) {
     Write-Host '     已跳过' -ForegroundColor Yellow
 } else {
     $report = Join-Path $root 'dist/selftest.json'
-    $proc = Start-Process -FilePath $exePath -ArgumentList @('--selftest', $report) -Wait -PassThru
+    if (Test-Path -LiteralPath $report) { Remove-Item -LiteralPath $report -Force }
+    # Start-Process 的 -ArgumentList 不会自动给数组元素加引号，
+    # 路径含空格时会被拆成多个参数，必须手工拼好带引号的命令行。
+    $argLine = '--selftest "' + $report + '"'
+    $proc = Start-Process -FilePath $exePath -ArgumentList $argLine -Wait -PassThru
     if (Test-Path -LiteralPath $report) {
         $json = Get-Content -LiteralPath $report -Raw -Encoding UTF8 | ConvertFrom-Json
         if ($json.ok) {

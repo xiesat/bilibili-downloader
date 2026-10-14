@@ -39,6 +39,9 @@ a = Analysis(
         "PySide6.QtWebEngineQuick",
         "PySide6.QtWebChannel",
         "PySide6.QtWebSockets",
+        "PySide6.QtNetwork",
+        "PySide6.QtSql",
+        "PySide6.QtPrintSupport",
         "PySide6.QtMultimedia",
         "PySide6.QtMultimediaWidgets",
         "PySide6.QtCharts",
@@ -60,10 +63,21 @@ a = Analysis(
     optimize=0,
 )
 
-# 默认剔除 imageio-ffmpeg 捆绑的 ffmpeg 二进制，把产物体积压回 ~60MB
-if not BUNDLE_FFMPEG:
-    a.datas = [item for item in a.datas if "ffmpeg" not in str(item[0]).lower()]
-    a.binaries = [item for item in a.binaries if "ffmpeg" not in str(item[0]).lower()]
+#: 明确不需要的重量级文件
+#: opengl32sw.dll 是 Qt 的软件 OpenGL 回退，只服务于 Qt Quick / WebEngine，
+#: 纯 Widgets 程序用不到，却占了近 20MB。
+DROP_FILES = {"opengl32sw.dll", "d3dcompiler_47.dll", "qtwebenginecore.dll"}
+
+
+def _keep(entry) -> bool:
+    name = str(entry[0]).lower()
+    if not BUNDLE_FFMPEG and "ffmpeg" in name:
+        return False
+    return os.path.basename(name) not in DROP_FILES
+
+
+a.datas = [item for item in a.datas if _keep(item)]
+a.binaries = [item for item in a.binaries if _keep(item)]
 
 pyz = PYZ(a.pure)
 

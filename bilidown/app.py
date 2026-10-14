@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import logging
+import os
 import sys
 
 from . import __version__
@@ -10,6 +11,42 @@ from . import __version__
 __all__ = ["main"]
 
 log = logging.getLogger(__name__)
+
+
+def _ensure_std_streams() -> None:
+    """保证命令行模式有可用的标准输出。
+
+    打包成窗口程序（console=False）后 sys.stdout / sys.stderr 都是 None，
+    任何 print 都会抛 AttributeError，命令行模式会直接失败。
+    这里先尝试附加到父进程控制台（从 cmd / PowerShell 启动时可用），
+    失败则把输出重定向到日志文件，至少不会崩。
+    """
+    if sys.stdout is not None and sys.stderr is not None:
+        return
+
+    if sys.platform == "win32":
+        try:
+            import ctypes
+
+            ATTACH_PARENT_PROCESS = 0xFFFFFFFF
+            if ctypes.WinDLL("kernel32.dll").AttachConsole(ATTACH_PARENT_PROCESS):
+                sys.stdout = open("CONOUT$", "w", encoding="utf-8", buffering=1)
+                sys.stderr = open("CONOUT$", "w", encoding="utf-8", buffering=1)
+                return
+        except Exception:  # noqa: BLE001 - 附加控制台失败不应影响主流程
+            pass
+
+    try:
+        from .util.paths import logs_dir
+
+        stream = open(logs_dir() / "cli.log", "a", encoding="utf-8", buffering=1)
+    except Exception:  # noqa: BLE001
+        stream = open(os.devnull, "w", encoding="utf-8")
+
+    if sys.stdout is None:
+        sys.stdout = stream
+    if sys.stderr is None:
+        sys.stderr = stream
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -20,6 +57,7 @@ def main(argv: list[str] | None = None) -> int:
     from .util.logging import setup_logging
 
     args = list(sys.argv[1:] if argv is None else argv)
+    _ensure_std_streams()
 
     # 打包版没有控制台，自检结果写入文件
     if args and args[0] == "--selftest":
