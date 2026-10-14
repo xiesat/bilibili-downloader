@@ -173,6 +173,23 @@ class DownloadManager:
             await self._client.close()
             self._client = None
 
+    async def restart_workers(self) -> None:
+        """在空闲时按最新配置重建 worker，用于并发数变更。"""
+        if any(task.state.is_active for task in self.tasks):
+            return
+        for worker in self._workers:
+            worker.cancel()
+        if self._workers:
+            await asyncio.gather(*self._workers, return_exceptions=True)
+        self._workers.clear()
+        self._shutdown.clear()
+        count = max(1, self._config.max_concurrent_videos)
+        self._workers = [
+            asyncio.create_task(self._worker(index), name=f"bilidown-worker-{index}")
+            for index in range(count)
+        ]
+        log.info("并发数已调整为 %d", count)
+
     def reload_ffmpeg(self) -> FFmpegInfo | None:
         """重新探测 ffmpeg（用户在一键下载后调用）。"""
         self._ffmpeg = find_ffmpeg(self._config.ffmpeg_path_or_none)
@@ -242,12 +259,12 @@ class DownloadManager:
             for key in list(self._order)
             if self._tasks.get(key) is not None and self._tasks[key].state.is_terminal
         ]:
-            self._tasks.pop(task_id, None)
+            task = self._tasks.pop(task_id, None)
             self._order.remove(task_id)
             self._last_emit.pop(task_id, None)
             self._speed_state.pop(task_id, None)
-        if self._on_event is not None:
-            self._on_event(ManagerEvent(kind="task_removed"))
+            if self._on_event is not None and task is not None:
+                self._on_event(ManagerEvent(kind="task_removed", task=task))
 
     # ------------------------------------------------------------------
     # 控制
