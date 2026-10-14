@@ -1,5 +1,10 @@
 # B站视频下载器 v2
 
+[![CI](https://github.com/xiesat/bilibili-downloader/actions/workflows/ci.yml/badge.svg)](https://github.com/xiesat/bilibili-downloader/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://github.com/xiesat/bilibili-downloader/blob/main/LICENSE)
+[![Python](https://img.shields.io/badge/Python-3.10%2B-blue.svg)](https://www.python.org/)
+[![Platform](https://img.shields.io/badge/Platform-Windows-lightgrey.svg)](https://github.com/xiesat/bilibili-downloader)
+
 一个面向 Windows 的 B 站视频下载工具：PySide6 图形界面 + asyncio 异步下载引擎。
 支持扫码登录、批量下载、分 P / 合集展开、断点续传，并且**直连官方 CDN 原始码流，产物不带任何平台水印**。
 
