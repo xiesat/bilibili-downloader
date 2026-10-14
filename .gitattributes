@@ -1,0 +1,17 @@
+# 统一换行符，避免 Windows 上出现大量 CRLF 警告与无意义的 diff
+* text=auto eol=lf
+
+# Windows 脚本保持 CRLF，否则部分环境下无法执行
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# 二进制资源不做换行转换
+*.ico binary
+*.png binary
+*.jpg binary
+*.exe binary
+*.dll binary
+
+# 归档的 v1 源码保留原样，不参与语言统计的喧宾夺主
+legacy/* linguist-vendored
