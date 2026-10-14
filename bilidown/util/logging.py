@@ -41,6 +41,11 @@ def setup_logging(level: int = logging.INFO, *, filename: str = "app.log") -> lo
     root.setLevel(level)
     formatter = logging.Formatter(_LOG_FORMAT, datefmt=_DATE_FORMAT)
 
+    # 第三方库的 INFO 日志极其嘈杂：httpx 会打印每个请求的完整 URL，
+    # 其中带有签名参数，既刷屏又泄露细节，统一压到 WARNING。
+    for noisy in ("httpx", "httpcore", "urllib3", "asyncio", "PIL", "qrcode"):
+        logging.getLogger(noisy).setLevel(logging.WARNING)
+
     try:
         file_handler = logging.handlers.RotatingFileHandler(
             logs_dir() / filename,
