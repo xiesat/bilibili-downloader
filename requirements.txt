@@ -1,0 +1,9 @@
+# B站视频下载器 — 运行期依赖
+# 安装： .\.venv\Scripts\python.exe -m pip install -r requirements.txt
+
+PySide6-Essentials==6.12.0   # GUI（仅 QtCore/QtGui/QtWidgets，不含 Addons，省 ~70MB）
+httpx>=0.28.1                # 异步 HTTP 客户端（原生 async + 连接池）
+imageio-ffmpeg>=0.6.0        # 提供可一键获取的 ffmpeg 二进制（免管理员）
+qrcode>=8.2                  # 扫码登录二维码生成（纯 Python）
+Pillow>=12.3.0               # qrcode 的图像后端
+tqdm>=4.70.1                 # CLI 模式进度条（GUI 模式不依赖）

@@ -1,0 +1,31 @@
+# 虚拟环境
+.venv/
+venv/
+env/
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.pytest_cache/
+.mypy_cache/
+
+# 构建产物
+build/
+dist/
+*.spec.bak
+build.log
+
+# 运行期产物
+*.log
+*.part
+*.meta.json
+*.m4s
+downloads/
+
+# 编辑器 / 系统
+.vscode/
+.idea/
+Thumbs.db
+desktop.ini
