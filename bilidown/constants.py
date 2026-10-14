@@ -5,6 +5,7 @@ from __future__ import annotations
 __all__ = [
     "DEFAULT_USER_AGENT",
     "REFERER",
+    "API_ROOT",
     "API_WEB",
     "API_PLAYER",
     "API_PASSPORT",
@@ -25,6 +26,7 @@ DEFAULT_USER_AGENT = (
 #: B 站 CDN 会校验 Referer，缺失直接 403
 REFERER = "https://www.bilibili.com/"
 
+API_ROOT = "https://api.bilibili.com/x"
 API_WEB = "https://api.bilibili.com/x/web-interface"
 API_PLAYER = "https://api.bilibili.com/x/player"
 API_PASSPORT = "https://passport.bilibili.com/x/passport-login/web"
