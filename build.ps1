@@ -1,20 +1,22 @@
 <#
 .SYNOPSIS
-    打包 B站视频下载器（PyInstaller onedir）。
+    打包 B站视频下载器（PyInstaller）。
 
 .DESCRIPTION
-    默认产物体积约 60MB，不含 ffmpeg（首次使用时在界面点「一键下载」）。
-    加 -BundleFFmpeg 会内置 ffmpeg 静态包，产物约 140MB，可完全离线。
-    加 -RunTests 会在打包前先跑单元测试。
+    默认产出 onedir 目录（启动快、便于排查），体积约 93MB，不含 ffmpeg。
+    加 -OneFile 产出单个自解压 exe（下载即用，但冷启动慢 3-6 秒）。
+    加 -BundleFFmpeg 内置 ffmpeg 静态包，产物约 170MB，可完全离线。
+    加 -RunTests 打包前先跑单元测试。
 
 .EXAMPLE
     .\build.ps1
-    .\build.ps1 -RunTests
-    .\build.ps1 -BundleFFmpeg
+    .\build.ps1 -OneFile
+    .\build.ps1 -RunTests -BundleFFmpeg
 #>
 [CmdletBinding()]
 param(
     [switch]$BundleFFmpeg,
+    [switch]$OneFile,
     [switch]$RunTests,
     [switch]$SkipSelftest
 )
@@ -46,13 +48,23 @@ if ($BundleFFmpeg) {
 } else {
     Remove-Item Env:\BILIDOWN_BUNDLE_FFMPEG -ErrorAction SilentlyContinue
 }
+if ($OneFile) {
+    $env:BILIDOWN_ONEFILE = '1'
+} else {
+    Remove-Item Env:\BILIDOWN_ONEFILE -ErrorAction SilentlyContinue
+}
 
 Write-Host '[3/5] 调用 PyInstaller' -ForegroundColor Cyan
 & $venvPy -m PyInstaller --noconfirm --clean (Join-Path $root 'build.spec')
 if ($LASTEXITCODE -ne 0) { throw 'PyInstaller 构建失败' }
 
-$outDir = Join-Path $root "dist/$appName"
-$exePath = Join-Path $outDir "$appName.exe"
+if ($OneFile) {
+    $exePath = Join-Path $root "dist/$appName.exe"
+    $outDir = $null
+} else {
+    $outDir = Join-Path $root "dist/$appName"
+    $exePath = Join-Path $outDir "$appName.exe"
+}
 
 if (-not (Test-Path -LiteralPath $exePath)) { throw "未找到产物可执行文件 $exePath" }
 
@@ -74,18 +86,24 @@ if ($SkipSelftest) {
             Write-Host '     自检未通过，详情见 dist/selftest.json' -ForegroundColor Red
             $json.errors | ForEach-Object { Write-Host ('       - ' + ($_ -split "`n")[0]) -ForegroundColor Red }
         }
-        Write-Host ("     界面截图：" + $json.checks.gui.screenshot)
+        Write-Host ('     界面截图：' + $json.checks.gui.screenshot)
     } else {
         Write-Host ('     自检进程退出码 ' + $proc.ExitCode + '，未生成报告') -ForegroundColor Red
     }
 }
 
 Write-Host '[5/5] 产物统计' -ForegroundColor Cyan
-$files = Get-ChildItem -LiteralPath $outDir -Recurse -File
-$totalMb = ($files | Measure-Object -Property Length -Sum).Sum / 1MB
-Write-Host ("     目录   : " + $outDir)
-Write-Host ("     文件数 : " + $files.Count)
-Write-Host ("     总大小 : " + ('{0:N1} MB' -f $totalMb)) -ForegroundColor Green
-Write-Host ("     入口   : " + $exePath)
+if ($OneFile) {
+    $sizeMb = (Get-Item -LiteralPath $exePath).Length / 1MB
+    Write-Host ('     单文件 : ' + $exePath)
+    Write-Host ('     大小   : ' + ('{0:N1} MB' -f $sizeMb)) -ForegroundColor Green
+} else {
+    $files = Get-ChildItem -LiteralPath $outDir -Recurse -File
+    $totalMb = ($files | Measure-Object -Property Length -Sum).Sum / 1MB
+    Write-Host ('     目录   : ' + $outDir)
+    Write-Host ('     文件数 : ' + $files.Count)
+    Write-Host ('     总大小 : ' + ('{0:N1} MB' -f $totalMb)) -ForegroundColor Green
+    Write-Host ('     入口   : ' + $exePath)
+}
 Write-Host ''
 Write-Host '分发时把整个目录打包成 zip 即可。' -ForegroundColor Gray

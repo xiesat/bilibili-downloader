@@ -79,13 +79,14 @@ def _keep(entry) -> bool:
 a.datas = [item for item in a.datas if _keep(item)]
 a.binaries = [item for item in a.binaries if _keep(item)]
 
+#: 单文件模式：只有一个 exe，便于直接下载使用。
+#: 代价是每次启动都要把内容解压到临时目录，冷启动慢 3-6 秒，
+#: 因此发布版同时提供 onedir 压缩包（推荐）与单文件 exe。
+ONEFILE = os.environ.get("BILIDOWN_ONEFILE") == "1"
+
 pyz = PYZ(a.pure)
 
-exe = EXE(
-    pyz,
-    a.scripts,
-    [],
-    exclude_binaries=True,
+_exe_kwargs = dict(
     name=APP_NAME,
     debug=False,
     bootloader_ignore_signals=False,
@@ -100,12 +101,16 @@ exe = EXE(
     icon=["assets/app.ico"],
 )
 
-coll = COLLECT(
-    exe,
-    a.binaries,
-    a.datas,
-    strip=False,
-    upx=False,
-    upx_exclude=[],
-    name=APP_NAME,
-)
+if ONEFILE:
+    exe = EXE(pyz, a.scripts, a.binaries, a.datas, [], **_exe_kwargs)
+else:
+    exe = EXE(pyz, a.scripts, [], exclude_binaries=True, **_exe_kwargs)
+    coll = COLLECT(
+        exe,
+        a.binaries,
+        a.datas,
+        strip=False,
+        upx=False,
+        upx_exclude=[],
+        name=APP_NAME,
+    )
