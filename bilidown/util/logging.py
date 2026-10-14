@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import logging
 import logging.handlers
+import sys
 from collections.abc import Callable
 
 from .paths import logs_dir
@@ -60,10 +61,13 @@ def setup_logging(level: int = logging.INFO, *, filename: str = "app.log") -> lo
         # 磁盘不可写时不应阻止程序启动
         pass
 
-    console = logging.StreamHandler()
-    console.setFormatter(formatter)
-    console.setLevel(level)
-    root.addHandler(console)
+    # 打包成窗口程序（console=False）后 sys.stderr 为 None，
+    # 此时添加 StreamHandler 会在每条日志上抛异常，必须跳过。
+    if sys.stderr is not None:
+        console = logging.StreamHandler()
+        console.setFormatter(formatter)
+        console.setLevel(level)
+        root.addHandler(console)
 
     root._bilidown_configured = True  # type: ignore[attr-defined]
     return root

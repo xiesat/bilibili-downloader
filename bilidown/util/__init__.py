@@ -13,6 +13,7 @@ from .paths import (
     credentials_path,
     default_download_dir,
     logs_dir,
+    resource_path,
     temp_dir,
 )
 
@@ -33,5 +34,6 @@ __all__ = [
     "credentials_path",
     "default_download_dir",
     "logs_dir",
+    "resource_path",
     "temp_dir",
 ]

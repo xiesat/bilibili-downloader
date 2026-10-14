@@ -13,6 +13,7 @@ from pathlib import Path
 __all__ = [
     "APP_DIR_NAME",
     "app_root",
+    "resource_path",
     "app_data_dir",
     "config_path",
     "credentials_path",
@@ -31,6 +32,19 @@ def app_root() -> Path:
     if getattr(sys, "frozen", False):
         return Path(sys.executable).resolve().parent
     return Path(__file__).resolve().parents[2]
+
+
+def resource_path(relative: str) -> Path:
+    """定位随程序分发的资源（图标等）。
+
+    PyInstaller 打包后资源位于 sys._MEIPASS，源码运行时则位于项目根目录。
+    """
+    base = getattr(sys, "_MEIPASS", None)
+    if base:
+        candidate = Path(base) / relative
+        if candidate.exists():
+            return candidate
+    return app_root() / relative
 
 
 def _roaming() -> Path:

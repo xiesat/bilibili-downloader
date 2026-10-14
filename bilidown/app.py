@@ -20,6 +20,16 @@ def main(argv: list[str] | None = None) -> int:
     from .util.logging import setup_logging
 
     args = list(sys.argv[1:] if argv is None else argv)
+
+    # 打包版没有控制台，自检结果写入文件
+    if args and args[0] == "--selftest":
+        from pathlib import Path
+
+        from .selftest import run_selftest
+
+        target = Path(args[1]) if len(args) > 1 else Path.cwd() / "selftest.json"
+        return run_selftest(target)
+
     setup_logging()
     log.info("B站视频下载器 v%s 启动，参数：%s", __version__, args or "(无，进入图形界面)")
 

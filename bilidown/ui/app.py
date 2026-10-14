@@ -41,7 +41,7 @@ from ..errors import BiliError
 from ..models import DownloadTask, TaskState
 from ..util.ffmpeg import FFmpegInfo, download_ffmpeg, find_ffmpeg
 from ..util.logging import CallbackHandler
-from ..util.paths import app_root
+from ..util.paths import resource_path
 from .bridge import AsyncRunner, SignalBridge
 from .theme import apply_theme
 from .views.account_panel import AccountPanel
@@ -61,7 +61,7 @@ CONFIG_SAVE_DELAY = 800
 
 def _app_icon() -> QIcon:
     """优先使用打包资源里的图标。"""
-    for candidate in (app_root() / "assets" / "app.ico", app_root() / "a.ico"):
+    for candidate in (resource_path("assets/app.ico"), resource_path("a.ico")):
         if candidate.exists():
             return QIcon(str(candidate))
     return QIcon()

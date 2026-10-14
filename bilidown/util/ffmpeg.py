@@ -134,7 +134,15 @@ async def _run_pip(*args: str) -> int:
 
 
 async def _install_via_pip(report: ProgressFn) -> Path | None:
-    """方案一：pip 安装 imageio-ffmpeg 并复制到应用 bin 目录。"""
+    """方案一：pip 安装 imageio-ffmpeg 并复制到应用 bin 目录。
+
+    打包后的程序用的是冻结解释器，往它里面 pip install 没有任何意义，
+    因此冻结状态下直接跳过该方案，走直接下载。
+    """
+    if getattr(sys, "frozen", False):
+        log.info("当前为打包版本，跳过 pip 方案")
+        return None
+
     report("正在通过 pip 安装 imageio-ffmpeg…", 0.05)
     if await _run_pip("install", "--upgrade", "imageio-ffmpeg") != 0:
         return None
