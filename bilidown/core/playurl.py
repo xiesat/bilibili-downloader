@@ -123,7 +123,7 @@ def pick_video(streams: list[StreamRef], target_qn: int = 0, codec: str = "avc1"
     目标画质拿不到时，退到不高于它的最高画质，并在上层给出提示。
     """
     if not streams:
-        raise QualityUnavailableError(0, "该稿件没有可用的视频流")
+        raise QualityUnavailableError("该稿件没有可用的视频流")
 
     by_quality: dict[int, list[StreamRef]] = {}
     for stream in streams:
@@ -201,7 +201,7 @@ async def build_plan(
     data = await fetch_playinfo(client, bvid=bvid, cid=cid, dash=False)
     durl = data.get("durl") or []
     if not durl:
-        raise QualityUnavailableError(0, "该稿件没有可下载的媒体流")
+        raise QualityUnavailableError("该稿件没有可下载的媒体流")
 
     first = durl[0] if isinstance(durl[0], dict) else {}
     quality_id = int(data.get("quality") or 0)
@@ -215,7 +215,7 @@ async def build_plan(
     )
 
     if not progressive.url:
-        raise QualityUnavailableError(0, "渐进式播放地址为空")
+        raise QualityUnavailableError("渐进式播放地址为空")
 
     note = ""
     if mode is DownloadMode.AUTO and not ffmpeg_available:

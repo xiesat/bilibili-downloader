@@ -198,7 +198,7 @@ async def fetch_collection_entries(
         if not archives:
             break
 
-        for item in archives:
+        for offset, item in enumerate(archives, start=len(entries) + 1):
             archive = _as_dict(item)
             bvid = str(archive.get("bvid") or "")
             if not bvid:
@@ -214,6 +214,7 @@ async def fetch_collection_entries(
                         duration=int(archive.get("duration") or 0),
                         pages=[page],
                         season_title=title,
+                        season_index=offset,
                     ),
                     page=page,
                 )
@@ -224,13 +225,17 @@ async def fetch_collection_entries(
         page_num += 1
 
     if not entries:
-        raise QualityUnavailableError(0, "合集为空或无法访问")
+        raise QualityUnavailableError("合集为空或无法访问")
 
-    # 合集接口不返回 cid，需要逐个补全才能拿到播放地址
+    # 合集接口不返回 cid，需要逐个回查 view 补全，否则拿不到播放地址。
+    # 注意保留合集本身的标题与序号：合集接口是合集信息的权威来源。
     for entry in entries:
         if entry.page.cid:
             continue
+        index = entry.video.season_index
         info = await fetch_video_info(client, bvid=entry.video.bvid)
+        info.season_title = title
+        info.season_index = index
         entry.video = info
         entry.page = info.pages[0]
 
